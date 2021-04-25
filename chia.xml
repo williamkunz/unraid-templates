@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>chia</Name>
+  <Repository>williamkunz/chia-docker</Repository>
+  <Registry>https://hub.docker.com/r/williamkunz/chia-docker</Registry>
+  <Network>host</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>true</Privileged>
+  <Support/>
+  <Project>https://www.chia.net/</Project>
+  <Overview>Donations appreciated @ xch13rxv427ymk9xy5crn5uz64r7h3062mf873aylg8lhqxwkt5tjn7qxtvssn&#xD;
+&#xD;
+  </Overview>
+  <Category>Other:</Category>
+  <WebUI/>
+  <TemplateURL/>
+  <Icon>https://cryptodiffer.com/src/images/project/logo/chia-logo-cryptodiffer.jpg</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1619386621</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Description>Donations appreciated @ xch13rxv427ymk9xy5crn5uz64r7h3062mf873aylg8lhqxwkt5tjn7qxtvssn&#xD;
+&#xD;
+  </Description>
+  <Networking>
+    <Mode>host</Mode>
+    <Publish>
+      <Port>
+        <HostPort>8555</HostPort>
+        <ContainerPort>8555</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+      <Port>
+        <HostPort>8444</HostPort>
+        <ContainerPort>8444</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+      <Port>
+        <HostPort>58444</HostPort>
+        <ContainerPort>58444</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/chia_plots</HostDir>
+      <ContainerDir>/plots</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/chia_keys/</HostDir>
+      <ContainerDir>/key_dir</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Value>true</Value>
+      <Name>farmer</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>/key_dir/name-of-key-file.txt</Value>
+      <Name>keys</Name>
+      <Mode/>
+    </Variable>
+  </Environment>
+  <Labels/>
+  <Config Name="Farmer mode" Target="farmer" Default="true" Mode="" Description="Farming mode enabled" Type="Variable" Display="always" Required="true" Mask="false">true</Config>
+  <Config Name="Directory of plots" Target="/plots" Default="/mnt/user/chia_plots" Mode="rw" Description="Where your computed plots live" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/chia_plots</Config>
+  <Config Name="Host Port 1" Target="8555" Default="8555" Mode="tcp" Description="Container Port: " Type="Port" Display="always" Required="true" Mask="false">8555</Config>
+  <Config Name="Host Port 2" Target="8444" Default="8444" Mode="tcp" Description="Container Port: " Type="Port" Display="always" Required="true" Mask="false">8444</Config>
+  <Config Name="Key file directory" Target="/key_dir" Default="" Mode="rw" Description="Path to your text file with your keys or optionally generate new ones" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/chia_keys/</Config>
+  <Config Name="Name of Key file" Target="keys" Default="/key_dir/name-of-key-file.txt" Mode="" Description="append your name of the txt file that contains your private keys." Type="Variable" Display="always" Required="false" Mask="false">/key_dir/name-of-key-file.txt</Config>
+  <Config Name="Host Port 3" Target="58444" Default="58444" Mode="tcp" Description="Port for the full node to operate. Not yet configurable." Type="Port" Display="always" Required="true" Mask="false">58444</Config>
+</Container>
