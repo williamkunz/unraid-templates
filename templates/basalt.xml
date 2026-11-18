@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Basalt</Name>
+  <!-- Basalt publishes no image of its own: this one is built from the Dockerfile in Basalt's repository, at each new
+       release tag, by .github/workflows/basalt-image.yml. latest follows the newest release; to stay on one release,
+       change the tag to a version such as 0.4.1. The image is CUDA 13 only and the engine is compiled for sm_120 (Blackwell). -->
+  <Repository>ghcr.io/williamkunz/basalt:latest</Repository>
+  <Registry>https://github.com/williamkunz/unraid-templates/pkgs/container/basalt</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/williamkunz/unraid-templates/issues</Support>
+  <Project>https://github.com/jesdga95/basalt</Project>
+  <Overview>Basalt runs large language models on an NVIDIA Blackwell GPU plus system RAM: Qwen3.8-Flash-Next, DeepSeek-V4.1-Flash and the dense Qwen3.8-27B. The experts of a mixture-of-experts model that do not fit in graphics memory are kept in RAM. It serves an OpenAI- and Anthropic-compatible API and a chat page. This template runs an image built from Basalt's own Dockerfile.
+
+Requirements: the Nvidia Driver plugin on driver 580 or newer and an RTX 50 series (Blackwell) card; older cards are not supported. You also need room for the model on an SSD pool and enough RAM for the part of the model that does not fit on the card.
+
+Choosing a model: a model is one .basalt file. Download it into the Models folder from the Unraid terminal, for example:
+wget -c -P /mnt/cache/appdata/basalt/models https://huggingface.co/jesdga/Qwen3.8-27B-Basalt/resolve/main/Qwen3.8-27B-QUASAR-NVFP4.basalt
+(-c resumes a stopped download). The sizes below are the download.
+
+Qwen3.8-Flash-Next, the main model, for chat, code and tools (huggingface.co/jesdga/Qwen3.8-Flash-Next-Basalt):
+- Qwen3.8-FN-NVFP4-DQ6_K: the default. 132 GB.
+- Qwen3.8-FN-UD-IQ1_S, UD-IQ1_M, UD-IQ2_XS, UD-IQ3_XXS: smaller, for less RAM, at some cost in quality. 70-88 GB.
+- Qwen3.8-FN-UD-IQ4_XS, UD-Q4_K_XL, UD-Q5_K_XL, UD-Q6_K_XL, Q8_0: more bits, for servers with a lot of RAM. 98-192 GB.
+
+Qwen3.8-27B, a dense model that runs on the card alone (huggingface.co/jesdga/Qwen3.8-27B-Basalt):
+- Qwen3.8-27B-QUASAR-NVFP4: 21 GB.
+
+DeepSeek-V4.1-Flash, the largest model (huggingface.co/jesdga/DeepSeek-V4.1-Flash-1017-Basalt):
+- DeepSeek-V4.1-Flash-1017-UD-IQ1_M: the default. 260 GB.
+- UD-IQ2_XXS: 286 GB. NVFP4: 428 GB.
+
+Config file: Basalt reads its settings from basalt_config.json in the AppData folder and does not start without it. Name the model by its path inside the container (/models/...), and keep server.port at 8080. A minimal file:
+{"version": 2, "models": [{"model": "/models/Qwen3.8-FN-NVFP4-DQ6_K.basalt", "kv": "int8", "max-context": 32768}], "engine": {"resident-experts": true}, "server": {"port": 8080}}
+The context defaults to 8,192 tokens. To open the chat page by a host name (tower.local) rather than the server's IP, add "allowed-host": ["tower.local"] to the server block. Every setting: docs/configuration in the Basalt repository.
+
+First start: the page is up at once and the model loads behind it, with the progress shown in the page header; watch the log. A failed load stops the container and the log says why.
+
+API key: Basalt takes the key on the command line only, not in the config file. Without one the API is open to your network. To set one, switch to Advanced View and enter --api-key KEY in Post Arguments (openssl rand -hex 24 makes one). Clients send it as Authorization: Bearer KEY or x-api-key.
+
+Changing settings: edit basalt_config.json and restart the container. The model files stay in the Models folder.
+
+Template and Unraid problems: the Support link. Basalt itself: the Project link.</Overview>
+  <Category>AI:</Category>
+  <ExtraSearchTerms>llm qwen deepseek local ai openai anthropic api inference chat nvidia cuda gpu blackwell strata</ExtraSearchTerms>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/templates/basalt.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/images/basalt.png</Icon>
+  <License>MIT</License>
+  <DonateText>Support Basalt's developer.</DonateText>
+  <DonateLink>https://github.com/sponsors/jesdga95</DonateLink>
+  <!-- Carried over from the Strata template (Basalt is a fork of Strata): memlock lets the engine pin the RAM it uses for
+       the model, shm-size gives it shared memory, and stop-timeout gives the model time to unload on a stop (Basalt
+       handles SIGTERM by shutting the engine down cleanly; Docker's default 10 s kills it). -->
+  <ExtraParams>--runtime=nvidia --ulimit memlock=-1:-1 --shm-size=2g --stop-timeout 120</ExtraParams>
+  <PostArgs/>
+  <Requires>**Nvidia Driver plugin** on driver 580 or newer and an **RTX 50 series (Blackwell)** card. A **basalt_config.json** in the AppData folder (see the Overview). Do not set a memory limit on the container: Basalt plans from the server's free RAM.</Requires>
+
+  <Config Name="WebUI / API port" Target="8080" Default="8080" Mode="tcp" Description="Chat page and the API (/v1 for OpenAI clients, the root URL for Anthropic clients). Keep server.port in basalt_config.json at 8080; change the host port here instead." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+
+  <Config Name="AppData" Target="/data" Default="/mnt/cache/appdata/basalt" Mode="rw" Description="Holds basalt_config.json, and the server's engine log and conversation disk tier under .cache/basalt." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/appdata/basalt</Config>
+
+  <Config Name="Models" Target="/models" Default="/mnt/cache/appdata/basalt/models" Mode="rw" Description="The .basalt model files: 21 GB for Qwen3.8-27B, 70 to 192 GB for Flash-Next, 260 GB or more for DeepSeek. Name them in the config as /models/FILE.basalt. Use a direct pool path on an NVMe drive (/mnt/cache/... or /mnt/POOLNAME/...), not /mnt/user: the engine reads the model files while it runs." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/appdata/basalt/models</Config>
+
+  <Config Name="GPU" Target="NVIDIA_VISIBLE_DEVICES" Default="all" Mode="" Description="The cards the container sees: a UUID (GPU-xxxxxxxx-...) from the Nvidia Driver plugin page or nvidia-smi -L, several separated by commas, or all. A gpu value in basalt_config.json counts only the cards listed here, from 0." Type="Variable" Display="always" Required="true" Mask="false">all</Config>
+
+  <Config Name="NVIDIA driver capabilities" Target="NVIDIA_DRIVER_CAPABILITIES" Default="compute,utility" Mode="" Description="Driver features the container gets. compute,utility is enough for Basalt." Type="Variable" Display="advanced" Required="true" Mask="false">compute,utility</Config>
+</Container>

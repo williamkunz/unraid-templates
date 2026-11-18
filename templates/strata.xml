@@ -8,9 +8,9 @@
   <Network>bridge</Network>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/williamkunz/strata-docker/issues</Support>
+  <Support>https://github.com/williamkunz/unraid-templates/issues</Support>
   <Project>https://github.com/Niko1221/Strata</Project>
-  <ReadMe>https://raw.githubusercontent.com/williamkunz/strata-docker/main/README.md</ReadMe>
+  <ReadMe>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/docs/strata.md</ReadMe>
   <Overview>Strata runs large mixture-of-experts models on an NVIDIA GPU plus system RAM: Qwen3.8-Flash-Next and its variants, the smaller Qwen3.6-35B-A3B, and DeepSeek-V4.1-Flash. It serves an OpenAI- and Anthropic-compatible API, a chat page and a live monitor. This template runs Strata's official image.
 
 Requirements: the Nvidia Driver plugin on driver 580 or newer and an RTX 20/30/40/50 card. For a GTX 10, P100 or V100, or a driver from 575 to 579, change the Repository tag to latest-cuda12. You also need 32 GB of RAM or more (more RAM allows a larger, better model) and room for the model on an SSD pool.
@@ -52,8 +52,8 @@ Template and Unraid problems: the Support link. Strata itself: the Project link.
   <Category>AI:</Category>
   <ExtraSearchTerms>llm qwen deepseek local ai openai anthropic api inference chat nvidia cuda gpu</ExtraSearchTerms>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/williamkunz/strata-docker/main/templates/strata.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/williamkunz/strata-docker/main/icon.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/templates/strata.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/images/strata.png</Icon>
   <License>MIT</License>
   <!-- From Strata's docs/DOCKER.md: memlock lets the engine pin the RAM it uses for the model, shm-size gives it shared
        memory, and stop-timeout gives the model two minutes to unload (Docker's default 10 s kills it, exit 137). -->
