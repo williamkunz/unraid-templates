@@ -1,6 +1,6 @@
 # Strata for Unraid
 
-An Unraid Community Applications template for [Strata](https://github.com/Niko1221/Strata), which runs large mixture-of-experts models on an NVIDIA GPU plus system RAM: Qwen3.8-Flash-Next and its variants, the smaller Qwen3.6-35B-A3B, and DeepSeek-V4.1-Flash. It serves an OpenAI- and Anthropic-compatible API, a chat page and a live monitor.
+An Unraid Community Applications template for [Strata](https://github.com/Niko1221/Strata), which runs large mixture-of-experts models on an NVIDIA GPU plus system RAM: Qwen3.8-Flash-Next and its variants, and the smaller Qwen3.6-35B-A3B. It serves an OpenAI- and Anthropic-compatible API, a chat page and a live monitor.
 
 The template runs Strata's official image, `ghcr.io/niko1221/strata:latest-cuda13`. Report template or Unraid problems in this repository's [issues](https://github.com/williamkunz/unraid-templates/issues), and problems with Strata itself to the [Strata project](https://github.com/Niko1221/Strata/issues).
 
@@ -14,9 +14,30 @@ Search for **Strata** in the Apps tab. Before installing you need:
 
 ### Choosing a model
 
-Leave **Model** and **Model family** empty and Strata picks one for your server; the log says which and why. To choose yourself, set both.
+Leave **Model** and **Model family** on their blank first choice and Strata picks one for your server; the log says which and why. To choose yourself, set both.
 
-The model names are compression levels. The number is roughly the bits kept per weight: a smaller number means a smaller download and less RAM, at some cost in quality. RAM in the tables is the server's total RAM.
+The model names are compression levels: how the model's weights are squeezed into fewer bits. RAM in the tables below is the server's total RAM.
+
+#### Reading the model names
+
+A name is built from parts. `UD-Q5_K_XL`, for example, is Unsloth's file (`UD-`) at about 5 bits per weight (`Q5`), in the K-quant format (`_K`), in its largest mix (`_XL`).
+
+| Part | Examples | What it means |
+| --- | --- | --- |
+| `Q` and a number | `Q2_0`, `UD-Q4_K_XL`, `Q8_0` | Quantized: the weights are stored in fewer bits. The number is roughly the bits per weight. Fewer bits mean a smaller download and less RAM, and lose a little more quality: 2 is small, 8 is almost the full model. |
+| `IQ` and a number | `IQ2_XS`, `IQ3_S` | An i-quant: weights are stored as patterns picked from a fixed table, which keeps more quality at very low bit counts but takes more work to compute, so these are slower than a plain format of the same size. |
+| `_0` | `Q2_0`, `Q8_0` | The simplest format: one scale for each small block of weights. Fast to compute. |
+| `_K` | `UD-Q2_K_XL`, `UD-Q5_K_XL` | A K-quant: blocks are grouped into larger blocks with their own scales, a middle ground between quality and size. |
+| `XXS`, `XS`, `S`, `M` | `IQ3_XXS`, `IQ3_S`, `UD-IQ1_M` | Size within the same bit count, from extra small to medium. A larger one keeps a little more precision. |
+| `XL` | `UD-Q4_K_XL`, `UD-Q6_K_XL` | Unsloth's largest mix: the most important layers are kept above the name's bit count. |
+| `UD-` | `UD-IQ2_XS`, `UD-Q5_K_XL` | Unsloth Dynamic: Unsloth's files, which choose the format layer by layer instead of using one for the whole model. |
+| `NVFP4` | `NVFP4` | NVIDIA's 4-bit floating-point format. RTX 50 cards compute it directly; other NVIDIA cards run it at 8-bit precision. |
+| `-NVIDIA`, `-QAD` | `NVFP4-NVIDIA`, `NVFP4-QAD` | `-NVIDIA` is NVIDIA's own 4-bit release, converted for Strata. `-QAD` is NVIDIA's model retrained to work well at 4 bits (quantization-aware distillation). |
+| `Gyro-S`, `Gyro-M` | | agentionai's Gyro format, which compresses the model's experts in its own way; S is small, M is medium. |
+
+The number is only a guide: `IQ3_S` is about 3.5 bits, and the Coder's `IQ1_M` is stored like `IQ3_S` but with half of the model's experts removed, so it is small for another reason.
+
+#### Sizes by model
 
 **Qwen3.8-Flash-Next**, the main model, for chat, code and tools. Model family `qwen`:
 
@@ -31,10 +52,16 @@ The model names are compression levels. The number is roughly the bits kept per 
 
 | Model family | Model | What it is | Download | RAM |
 | --- | --- | --- | ---: | ---: |
-| `swift` | the four `qwen` sizes | UkisAI's fine-tune that thinks for less time before it answers | as `qwen` | as `qwen` |
+| `swift` | `IQ2_XS`, `IQ3_XXS`, `IQ3_S` (the `qwen` sizes except `Q2_0`) | UkisAI's fine-tune that thinks for less time before it answers | as `qwen` | as `qwen` |
 | `coder` | `IQ1_M` | for code only, with half the model removed | 58 GB | 32 GB |
 | `gyro` | `Gyro-S` | the least memory, lower quality | 59 GB | about 28 GB of RAM and graphics memory together |
 | `gyro` | `Gyro-M` | about `IQ3_XXS` quality in less memory, 16–21% slower than `Q2_0` | 92 GB | about 35 GB together |
+| `unsloth` | `UD-IQ1_M` | 1-bit, the smallest Unsloth file | 68 GB | ~49 GB |
+| `unsloth` | `UD-Q2_0` | 2-bit | 71 GB | ~51 GB |
+| `unsloth` | `UD-IQ2_XS` | 2-bit i-quant | 76 GB | ~56 GB |
+| `unsloth` | `UD-Q2_K_XL` | 2-bit with some 3-bit experts | 80 GB | ~59 GB |
+| `unsloth` | `UD-IQ3_XXS` | 3-bit i-quant | 84 GB | ~63 GB |
+| `unsloth` | `UD-Q3_K_XL` | 3-bit with some 4-bit experts | 90 GB | ~69 GB |
 | `unsloth` | `UD-IQ4_XS` | 4-bit, better than `IQ3_S` | 94 GB | 72 GB |
 | `unsloth` | `UD-Q4_K_XL` | 4-bit | 111 GB | 88 GB |
 | `unsloth` | `UD-Q5_K_XL` | 5-bit, close to `Q8_0` | 158 GB | 108 GB |
@@ -42,32 +69,21 @@ The model names are compression levels. The number is roughly the bits kept per 
 | `unsloth` | `Q8_0` | 8-bit, the reference quality | 188 GB | 136 GB |
 | `nvfp4` | `NVFP4`, `NVFP4-NVIDIA`, `NVFP4-QAD` | NVIDIA's 4-bit format, fastest on RTX 50 cards; `NVFP4` has the best quality of the three | 102–128 GB | 80 GB |
 
-The `unsloth` RAM figures keep the whole model in memory. With less RAM they still run, reading part of the model from the SSD, which is much slower.
+The `unsloth` RAM figures keep the whole model in memory. With less RAM (from 48 GB, for the 1- to 4-bit sizes) they still run, reading part of the model from the SSD, which is much slower. The 1- to 3-bit sizes are Unsloth's files of 11-04; their RAM figures are worked out from Strata's rule (all the experts plus 16 GB), not published by Strata.
 
 **Qwen3.6-35B-A3B**, a smaller model for servers with less RAM. Model family `qwen36`:
 
-| Model | What it is | Download | RAM |
+| Model | What it is | Download | RAM Strata plans for |
 | --- | --- | ---: | ---: |
-| `UD-Q4_K_XL` | 4-bit, the smallest | 23 GB | 32 GB |
-| `UD-Q6_K_XL` | 6-bit, closer to the full model | 33 GB | 44 GB |
-| `Q8_0` | 8-bit, the closest to the full model | 38 GB | 52 GB |
+| `UD-Q4_K_XL` | 4-bit, the smallest | 22.9 GB | 32 GB |
+| `UD-Q6_K_XL` | 6-bit, closer to the full model | 32.6 GB | 44 GB |
+| `Q8_0` | 8-bit, the closest to the full model | 37.8 GB | 52 GB |
 
-**DeepSeek-V4.1-Flash**, the largest model. Model family `deepseek41`. Each download includes a 111 GB lookup table and an 8 GB helper model:
+These three names are also `unsloth` sizes of Qwen3.8, so set Model family to `qwen36` to get Qwen3.6. Qwen3.6 has 35 billion parameters, 3 billion of them used per token. Vision adds 0.9 GB to the download.
 
-| Model | What it is | Download |
-| --- | --- | ---: |
-| `ist-das-2.25bpw` | the best quality, the best for code and agents | 274 GB |
-| `ist-das-2.00bpw` | the middle choice | 257 GB |
-| `ist-das-1.75bpw` | the smallest, noticeably weaker at writing prose | 239 GB |
-| `ista-das-coder` | for code only, with half the model removed | 191 GB |
+The RAM figures are what Strata plans for, not a promise. The engine keeps as many of the model's experts as fit on the graphics card and computes the rest on the CPU, from system RAM. On a 12 or 16 GB card most experts stay in RAM, so free RAM after Unraid and your other containers has to cover them; if it does not, the start fails with `no host memory for the experts`. Strata measured `UD-Q4_K_XL` decoding at about 60 tokens per second on an RTX 3060 12 GB with most experts on the CPU, and about 118 on a 32 GB Radeon AI PRO R9700. [Strata's Qwen3.6 guide](https://github.com/Niko1221/Strata/blob/main/docs/QWEN36.md) has the full measurements.
 
-DeepSeek needs:
-
-- the `latest-cuda13` tag (DeepSeek's engine has no CUDA 12 build) and an RTX 30/40/50 card with 12 GB or more
-- 46 GB of RAM or more; 64 GB is the size Strata tested
-- an NVMe pool for the Data folder: the model reads its lookup table from the disk as it writes
-
-Expect about 5–10 tokens per second on a 12 GB card. DeepSeek uses its own engine, which the first start downloads into the Data folder. It is checked at `8k` context and offers up to `1m`. Strata's [model guide](https://github.com/Niko1221/Strata/blob/main/docs/MODELS.md) and [DeepSeek guide](https://github.com/Niko1221/Strata/blob/main/docs/DEEPSEEK41.md) have the measurements.
+**DeepSeek is no longer offered.** Strata stopped running DeepSeek models after 0.2.13. A container set to a DeepSeek model now stops at the start and says so: choose a Qwen model instead. The DeepSeek files (191–274 GB) stay in the Data folder until you delete them.
 
 ### First start
 

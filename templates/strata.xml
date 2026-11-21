@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>Strata</Name>
-  <!-- Strata's official image (published from 0.2.1 on). cuda13: RTX 20-50 on driver 580+; cuda12 for GTX 10 / P100 / V100 or drivers 575-579.
-       DeepSeek's engine (strata-dsv41) is published for CUDA 13 only, so DeepSeek needs the cuda13 tag. -->
+  <!-- Strata's official image (published from 0.2.1 on). cuda13: RTX 20-50 on driver 580+; cuda12 for GTX 10 / P100 / V100 or drivers 575-579. -->
   <Repository>ghcr.io/niko1221/strata:latest-cuda13</Repository>
   <Registry>https://github.com/Niko1221/Strata/pkgs/container/strata</Registry>
   <Network>bridge</Network>
@@ -11,11 +10,20 @@
   <Support>https://github.com/williamkunz/unraid-templates/issues</Support>
   <Project>https://github.com/Niko1221/Strata</Project>
   <ReadMe>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/docs/strata.md</ReadMe>
-  <Overview>Strata runs large mixture-of-experts models on an NVIDIA GPU plus system RAM: Qwen3.8-Flash-Next and its variants, the smaller Qwen3.6-35B-A3B, and DeepSeek-V4.1-Flash. It serves an OpenAI- and Anthropic-compatible API, a chat page and a live monitor. This template runs Strata's official image.
+  <Overview>Strata runs large mixture-of-experts models on an NVIDIA GPU plus system RAM: Qwen3.8-Flash-Next and its variants, and the smaller Qwen3.6-35B-A3B. It serves an OpenAI- and Anthropic-compatible API, a chat page and a live monitor. This template runs Strata's official image.
 
 Requirements: the Nvidia Driver plugin on driver 580 or newer and an RTX 20/30/40/50 card. For a GTX 10, P100 or V100, or a driver from 575 to 579, change the Repository tag to latest-cuda12. You also need 32 GB of RAM or more (more RAM allows a larger, better model) and room for the model on an SSD pool.
 
-Choosing a model: leave Model and Model family empty and Strata picks one for this server, and the log says which and why. To choose yourself, set both. The model names are compression levels: the number is roughly the bits kept per weight, so a smaller number means a smaller download and less RAM, at some cost in quality. RAM below is the server's total RAM.
+Choosing a model: leave Model and Model family on their blank first choice and Strata picks one for this server, and the log says which and why. To choose yourself, set both. RAM below is the server's total RAM.
+
+Reading the model names: they are compression levels, built from parts.
+- Q and a number (Q2_0, Q8_0): the weights are stored in fewer bits; the number is roughly the bits per weight. Fewer bits mean a smaller download and less RAM, and a little less quality.
+- IQ (IQ2_XS, IQ3_S): an i-quant, which keeps more quality at very low bit counts but is slower to compute.
+- _0: the simplest format, fast. _K: a K-quant, a middle ground between quality and size.
+- XXS, XS, S, M: the size within the same bit count, smallest first. XL: Unsloth's largest mix, with the most important layers kept at more bits.
+- UD-: Unsloth Dynamic, Unsloth's files, which choose the format layer by layer.
+- NVFP4: NVIDIA's 4-bit format. -NVIDIA is NVIDIA's own release; -QAD is NVIDIA's model retrained to work well at 4 bits. Gyro-S and Gyro-M: agentionai's format, small and medium.
+So UD-Q5_K_XL is Unsloth's file at about 5 bits per weight, in the K-quant format, in its largest mix. The number is only a guide: IQ3_S is about 3.5 bits, and the Coder's IQ1_M is stored like IQ3_S with half of the model's experts removed.
 
 Qwen3.8-Flash-Next, the main model, for chat, code and tools (Model family qwen):
 - Q2_0: the fastest, good quality. 66 GB download, 48 GB RAM.
@@ -24,23 +32,19 @@ Qwen3.8-Flash-Next, the main model, for chat, code and tools (Model family qwen)
 - IQ3_S: the best quality, matches the full model; the slowest. 84 GB, 64 GB RAM.
 
 Other versions of Qwen3.8 (set the family shown):
-- swift, with the same four sizes as qwen: a fine-tune by UkisAI that thinks for less time before it answers.
+- swift, with the qwen sizes except Q2_0: a fine-tune by UkisAI that thinks for less time before it answers.
 - coder, Model IQ1_M: for code only, with half the model removed. 58 GB, 32 GB RAM.
 - gyro, Model Gyro-S: the least memory (about 28 GB of RAM and graphics memory together), lower quality. 59 GB. Gyro-M: about IQ3_XXS quality in 35 GB, 16-21% slower than Q2_0. 92 GB.
-- unsloth, more bits for servers with a lot of RAM (the RAM figure keeps the whole model in memory): UD-IQ4_XS 94 GB, 72 GB RAM; UD-Q4_K_XL 111 GB, 88 GB RAM; UD-Q5_K_XL 158 GB, 108 GB RAM; UD-Q6_K_XL 169 GB, 118 GB RAM; Q8_0 188 GB, 136 GB RAM (the reference quality).
+- unsloth, Unsloth's files from 1 to 8 bits (the RAM figure keeps the whole model in memory; with less, from 48 GB for the 1- to 4-bit sizes, they still run but read part of the model from the SSD, which is much slower): UD-IQ1_M 68 GB, ~49 GB RAM; UD-Q2_0 71 GB, ~51 GB RAM; UD-IQ2_XS 76 GB, ~56 GB RAM; UD-Q2_K_XL 80 GB, ~59 GB RAM; UD-IQ3_XXS 84 GB, ~63 GB RAM; UD-Q3_K_XL 90 GB, ~69 GB RAM; UD-IQ4_XS 94 GB, 72 GB RAM; UD-Q4_K_XL 111 GB, 88 GB RAM; UD-Q5_K_XL 158 GB, 108 GB RAM; UD-Q6_K_XL 169 GB, 118 GB RAM; Q8_0 188 GB, 136 GB RAM (the reference quality).
 - nvfp4: NVIDIA's 4-bit format, fastest on RTX 50 cards. NVFP4 (the best of the three), NVFP4-NVIDIA or NVFP4-QAD. 102-128 GB, 80 GB RAM.
 
-Qwen3.6-35B-A3B, a smaller model for servers with less RAM (Model family qwen36):
+Qwen3.6-35B-A3B, a smaller model for servers with less RAM (Model family qwen36; these names are also unsloth sizes of Qwen3.8, so the family decides):
 - UD-Q4_K_XL: 23 GB download, 32 GB RAM.
 - UD-Q6_K_XL: closer to the full model. 33 GB, 44 GB RAM.
 - Q8_0: the closest to the full model. 38 GB, 52 GB RAM.
+The RAM figures are what Strata plans for, not a promise: on a 12 or 16 GB card most of the experts stay in system RAM, and if the free RAM cannot hold them the start fails with "no host memory for the experts".
 
-DeepSeek-V4.1-Flash, the largest model (Model family deepseek41). Each download includes a 111 GB lookup table and an 8 GB helper model:
-- ist-das-2.25bpw: the best quality, the best for code and agents. 274 GB.
-- ist-das-2.00bpw: the middle choice. 257 GB.
-- ist-das-1.75bpw: the smallest, noticeably weaker at writing prose. 239 GB.
-- ista-das-coder: for code only, with half the model removed. 191 GB.
-DeepSeek needs the latest-cuda13 tag, an RTX 30/40/50 card with 12 GB or more, 46 GB of RAM or more (64 GB is the tested size) and an NVMe pool. Expect about 5-10 tokens per second on a 12 GB card. Its own engine is downloaded into the Data folder on the first start. It is checked at 8k context and offers up to 1m.
+DeepSeek is no longer offered: Strata stopped running DeepSeek models after 0.2.13. A container set to a DeepSeek model now stops at the start and says so; choose a Qwen model instead. Its files stay in the Data folder (191-274 GB) until you delete them.
 
 First start: downloads the model into the Data folder and prepares it, which takes a while; watch the log. A stopped download resumes where it left off. Later starts go straight to serving.
 
@@ -50,7 +54,7 @@ Changing settings: edit them and Apply. The new values replace the saved ones on
 
 Template and Unraid problems: the Support link. Strata itself: the Project link.</Overview>
   <Category>AI:</Category>
-  <ExtraSearchTerms>llm qwen deepseek local ai openai anthropic api inference chat nvidia cuda gpu</ExtraSearchTerms>
+  <ExtraSearchTerms>llm qwen local ai openai anthropic api inference chat nvidia cuda gpu</ExtraSearchTerms>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/templates/strata.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/images/strata.png</Icon>
@@ -58,21 +62,21 @@ Template and Unraid problems: the Support link. Strata itself: the Project link.
   <!-- From Strata's docs/DOCKER.md: memlock lets the engine pin the RAM it uses for the model, shm-size gives it shared
        memory, and stop-timeout gives the model two minutes to unload (Docker's default 10 s kills it, exit 137). -->
   <ExtraParams>--runtime=nvidia --ulimit memlock=-1:-1 --shm-size=2g --stop-timeout 120</ExtraParams>
-  <Requires>**Nvidia Driver plugin** on driver 580 or newer (575+ with the cuda12 tag). DeepSeek needs the cuda13 tag and an RTX 30 card or newer. Do not set a memory limit on the container: Strata plans from the server's whole RAM. Do not pin CPUs: the engine sets its own thread affinity.</Requires>
+  <Requires>**Nvidia Driver plugin** on driver 580 or newer (575+ with the cuda12 tag). Do not set a memory limit on the container: Strata plans from the server's whole RAM. Do not pin CPUs: the engine sets its own thread affinity.</Requires>
 
   <Config Name="WebUI / API port" Target="8080" Default="8080" Mode="tcp" Description="Chat page, monitor and the API (/v1 for OpenAI clients, the root URL for Anthropic clients)." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
 
-  <Config Name="Data" Target="/data" Default="/mnt/cache/appdata/strata" Mode="rw" Description="The model, the prepared pack, presets, tuning and the API key: tens of GB for Qwen, 191 to 274 GB for DeepSeek; the log names the size. Use a direct pool path on an NVMe drive (/mnt/cache/... or /mnt/POOLNAME/...), not /mnt/user: the engine reads the model files while it runs." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/appdata/strata</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/cache/appdata/strata" Mode="rw" Description="The model, the prepared pack, presets, tuning and the API key: tens of GB, up to 188 GB for the largest; the log names the size. Use a direct pool path on an NVMe drive (/mnt/cache/... or /mnt/POOLNAME/...), not /mnt/user: the engine reads the model files while it runs." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/appdata/strata</Config>
 
   <Config Name="GPU" Target="NVIDIA_VISIBLE_DEVICES" Default="all" Mode="" Description="The cards the container sees: a UUID (GPU-xxxxxxxx-...) from the Nvidia Driver plugin page or nvidia-smi -L, several separated by commas, or all. With exactly two RTX 30 or two RTX 50 class cards, a supported Qwen3.8 file and a context up to 128k, Strata uses its all-cards split engine by itself." Type="Variable" Display="always" Required="true" Mask="false">all</Config>
 
-  <Config Name="Model" Target="MODEL" Default="" Mode="" Description="Empty: Strata picks for this server, and the log says which and why. Otherwise set Model family too. A smaller number in the name means a smaller download and less RAM, at some cost in quality. Qwen3.8 (qwen): Q2_0 is the fastest (48 GB RAM), then IQ2_XS, IQ3_XXS, and IQ3_S the best (64 GB RAM). Qwen3.6 (qwen36), a smaller model: UD-Q4_K_XL for 32 GB of RAM, UD-Q6_K_XL, Q8_0. DeepSeek (deepseek41), the largest: ist-das-2.25bpw the best, ist-das-2.00bpw, ist-das-1.75bpw the smallest, ista-das-coder for code. The Overview lists every option with its download size and RAM." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Model" Target="MODEL" Default="|Q2_0|IQ2_XS|IQ3_XXS|IQ3_S|IQ1_M|Gyro-S|Gyro-M|UD-IQ1_M|UD-Q2_0|UD-IQ2_XS|UD-Q2_K_XL|UD-IQ3_XXS|UD-Q3_K_XL|UD-IQ4_XS|UD-Q4_K_XL|UD-Q5_K_XL|UD-Q6_K_XL|Q8_0|NVFP4|NVFP4-NVIDIA|NVFP4-QAD" Mode="" Description="The blank first choice: Strata picks for this server, and the log says which and why. Otherwise set Model family too: a size the family does not offer stops the start with a message listing the sizes it does. Sizes by family: qwen Q2_0, IQ2_XS, IQ3_XXS, IQ3_S; swift the same without Q2_0; coder IQ1_M; gyro Gyro-S, Gyro-M; unsloth the UD- sizes and Q8_0; nvfp4 the NVFP4 sizes; qwen36 UD-Q4_K_XL, UD-Q6_K_XL, Q8_0. A smaller number in the name means a smaller download and less RAM, at some cost in quality. Qwen3.8 (qwen): Q2_0 is the fastest (48 GB RAM), then IQ2_XS, IQ3_XXS, and IQ3_S the best (64 GB RAM). Qwen3.6 (qwen36), a smaller model: UD-Q4_K_XL for 32 GB of RAM, UD-Q6_K_XL, Q8_0. The Overview lists every option with its download size and RAM." Type="Variable" Display="always" Required="false" Mask="false"></Config>
 
-  <Config Name="Model family" Target="FAMILY" Default="" Mode="" Description="Which model, or which version of it. Empty: Strata's pick. qwen: Qwen3.8-Flash-Next, the main model. swift: Qwen3.8 tuned to think for less time. coder: Qwen3.8 for code only, in less RAM. gyro: Qwen3.8 in the least memory, slower. unsloth: Qwen3.8 at 4 to 8 bits, for servers with a lot of RAM. nvfp4: Qwen3.8 in NVIDIA's 4-bit format, fastest on RTX 50. qwen36: Qwen3.6-35B-A3B, a smaller model for 32-52 GB of RAM. deepseek41: DeepSeek-V4.1-Flash, the largest (cuda13 tag, 191-274 GB of disk)." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Model family" Target="FAMILY" Default="|qwen|swift|coder|gyro|unsloth|nvfp4|qwen36" Mode="" Description="Which model, or which version of it. The blank first choice: Strata's pick. qwen: Qwen3.8-Flash-Next, the main model. swift: Qwen3.8 tuned to think for less time (IQ2_XS, IQ3_XXS, IQ3_S). coder: Qwen3.8 for code only, in less RAM. gyro: Qwen3.8 in the least memory, slower. unsloth: Unsloth's Qwen3.8 files, 1 to 8 bits; the larger ones for servers with a lot of RAM. nvfp4: Qwen3.8 in NVIDIA's 4-bit format, fastest on RTX 50. qwen36: Qwen3.6-35B-A3B, a smaller model for 32-52 GB of RAM." Type="Variable" Display="always" Required="false" Mask="false"></Config>
 
-  <Config Name="Context length" Target="CONTEXT" Default="8k|32k|64k|128k|256k|512k|1m" Mode="" Description="How much text it remembers at once. Longer costs memory. Qwen3.8 goes up to 256k. DeepSeek is checked at 8k and offers up to 1m, but nothing past 256k has been tested and a very long prompt is read slowly." Type="Variable" Display="always" Required="true" Mask="false">32k</Config>
+  <Config Name="Context length" Target="CONTEXT" Default="8k|32k|64k|128k|256k|512k" Mode="" Description="How much text it remembers at once. Longer costs memory. Strata offers 8k to 512k." Type="Variable" Display="always" Required="true" Mask="false">32k</Config>
 
-  <Config Name="Vision" Target="VISION" Default="off|on|gpu|cpu" Mode="" Description="on: the model reads pictures (about 0.9 GB more to download). gpu or cpu choose where the picture reader runs. DeepSeek reads pictures with its own engine; off turns that off." Type="Variable" Display="always" Required="true" Mask="false">off</Config>
+  <Config Name="Vision" Target="VISION" Default="off|on|gpu|cpu" Mode="" Description="on: the model reads pictures (about 0.9 GB more to download). gpu or cpu choose where the picture reader runs." Type="Variable" Display="always" Required="true" Mask="false">off</Config>
 
   <Config Name="API key" Target="API_KEY" Default="" Mode="" Description="16 characters or more (openssl rand -hex 24 makes one). Empty: the first start makes one and keeps it in the Data folder." Type="Variable" Display="always" Required="false" Mask="true"></Config>
 
@@ -82,7 +86,11 @@ Template and Unraid problems: the Support link. Strata itself: the Project link.
 
   <Config Name="Allow tuning to change answers" Target="TUNE_ALLOW_SMALL" Default="0|1" Mode="" Description="1 lets the tuner also try settings that can change answers very slightly. 0 keeps only settings that leave answers the same." Type="Variable" Display="advanced" Required="true" Mask="false">0</Config>
 
-  <Config Name="Parallel requests" Target="PARALLEL" Default="" Mode="" Description="Requests answered at the same time, 1 to 8. Empty: fitted to the card. With 2 or more, Strata uses the MTP drafter, because its default DFlash2 drafter answers one request at a time. DeepSeek answers one at a time unless you set this." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Parallel requests" Target="PARALLEL" Default="" Mode="" Description="Requests answered at the same time, 1 to 8. Empty: fitted to the card. With 2 or more, Strata uses the MTP drafter, because its default DFlash2 drafter answers one request at a time." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+
+  <Config Name="Drafting" Target="DRAFTING" Default="auto|mtp|dflash2|off" Mode="" Description="The drafter guesses words ahead so answers come faster. auto (recommended): DFlash2 where the engine has it, else MTP, and MTP when Parallel requests is 2 or more. dflash2 downloads its drafter once (0.3 to 1.2 GB). off: no drafter." Type="Variable" Display="advanced" Required="true" Mask="false">auto</Config>
+
+  <Config Name="Draft vocabulary" Target="DRAFT_VOCAB" Default="cjk|en|cyrillic|fr|latin" Mode="" Description="Which words the drafter may guess. cjk (the default) includes Chinese, Japanese and Korean. en, cyrillic, fr and latin each keep English and code, and use less graphics memory: en the least." Type="Variable" Display="advanced" Required="true" Mask="false">cjk</Config>
 
   <Config Name="KV cache type" Target="KV" Default="int8|q4_0|k8v4|fp16" Mode="" Description="Conversation memory format: int8 (default), q4_0 (half the memory), k8v4, fp16." Type="Variable" Display="advanced" Required="true" Mask="false">int8</Config>
 
@@ -92,5 +100,5 @@ Template and Unraid problems: the Support link. Strata itself: the Project link.
 
   <Config Name="GPU roles" Target="GPU_ROLES" Default="" Mode="" Description="Several cards: a role for each, e.g. 1=main,0=helper (main, helper or off; cards you do not name are off). Empty: the engine's choice. See docs/MULTI_GPU.md in the Strata repository." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
 
-  <Config Name="Engine settings" Target="STRATA_SET" Default="" Mode="" Description="Advanced engine settings, space separated KEY=VALUE, like strata launch --set. For DeepSeek, dspark=on|off|auto sets its DSpark drafter (default auto). docs/SETTINGS.md in the Strata repository lists every setting." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Engine settings" Target="STRATA_SET" Default="" Mode="" Description="Advanced engine settings, space separated KEY=VALUE, like strata launch --set. For example STRATA_ROUTE_TAIL_SKIP=7 skips rarely used parts of the model: a little faster, but answers differ slightly (off by default since 0.2.17). docs/SETTINGS.md in the Strata repository lists every setting." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
 </Container>
