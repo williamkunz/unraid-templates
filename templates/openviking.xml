@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>OpenViking</Name>
+  <!-- OpenViking's own image. latest follows the newest release; to stay on one release, change the tag to a version
+       such as v0.5.5. Avoid main and the dated .dev tags: they are builds of unreleased code. -->
+  <Repository>ghcr.io/volcengine/openviking:latest</Repository>
+  <Registry>https://github.com/volcengine/OpenViking/pkgs/container/openviking</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/williamkunz/unraid-templates/issues</Support>
+  <Project>https://github.com/volcengine/OpenViking</Project>
+  <Overview>OpenViking is a context database for AI agents: one filesystem for what an agent knows (documents and code you import, memories from its conversations, and skills), with search over it. Agents reach it over an HTTP API, an MCP server, the ov command line, or Python, TypeScript and Go SDKs. It includes a web interface, OpenViking Studio, for browsing and searching that content.
+
+Requirements: an account with a model provider that offers an embedding model and a vision-language model (VLM): OpenAI, Volcengine, Kimi, GLM and others, or Ollama for local models. No GPU is needed in this container.
+
+First start: the container waits for its settings file, ov.conf. Until it exists, every request returns a message saying so. Open the container's Console from the Docker tab and run:
+openviking-server init
+In the wizard:
+- Choose your provider and models for the embedding model and the VLM.
+- At "Bind server host to", choose Remote (0.0.0.0). The container listens on all addresses, and OpenViking will not start that way without a root API key.
+- Keep the port at 1933; change the host port in this template instead.
+- At "Root API key", choose Generate one for me and save the key it shows. It is also stored in ov.conf.
+OpenViking starts on its own once the wizard saves ov.conf. Watch the log.
+
+Ollama in another container: the wizard writes http://localhost:11434 for Ollama, which inside this container points to the container itself. After the wizard, edit ov.conf in the AppData folder, change each localhost:11434 to your server's IP (http://192.168.1.10:11434), and restart the container.
+
+Studio: open the WebUI, choose Open source, and enter http://SERVER-IP:1933. Enter the root API key as the Root/Admin key, create an account and user on the Users page, and use that user's key to connect. Agents and the ov command line use user keys too; the root key is for administration.
+
+VikingBot: the bundled chat agent is off in this template. To use it, put a user key in bot.ov_server.api_key in ov.conf, set VikingBot to 1 and restart. See the VikingBot guide in OpenViking's documentation.
+
+Changing settings: run openviking-server init again in the Console (Enter keeps a current value), or edit ov.conf, then restart the container. Your data stays in the data folder under AppData.
+
+Do not open port 1933 to the internet without reading OpenViking's public access guide first.
+
+Template and Unraid problems: the Support link. OpenViking itself: the Project link.</Overview>
+  <Category>AI: Productivity:</Category>
+  <ExtraSearchTerms>context database agent memory rag knowledge skills mcp embeddings vector search llm volcengine bytedance</ExtraSearchTerms>
+  <WebUI>http://[IP]:[PORT:1933]/studio/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/templates/openviking.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/williamkunz/unraid-templates/main/images/openviking.png</Icon>
+  <License>AGPL-3.0</License>
+  <ExtraParams/>
+  <PostArgs/>
+  <Requires>An account with a model provider for an embedding model and a VLM, or Ollama. On first start, run **openviking-server init** in the container's Console (see the Overview).</Requires>
+
+  <Config Name="WebUI / API port" Target="1933" Default="1933" Mode="tcp" Description="The API (/api/v1), the MCP server (/mcp) and Studio (/studio/). Keep the port in ov.conf at 1933; change the host port here instead." Type="Port" Display="always" Required="true" Mask="false">1933</Config>
+
+  <Config Name="AppData" Target="/app/.openviking" Default="/mnt/user/appdata/openviking" Mode="rw" Description="Holds ov.conf (settings, model keys and the root API key), ovcli.conf, and all of OpenViking's data in the data folder: imported resources, memories and the vector index." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/openviking</Config>
+
+  <Config Name="VikingBot" Target="OPENVIKING_WITH_BOT" Default="0" Mode="" Description="1 also starts VikingBot, the bundled chat agent. It needs a user key in bot.ov_server.api_key in ov.conf first (see the Overview)." Type="Variable" Display="always" Required="true" Mask="false">0</Config>
+
+  <Config Name="Public base URL" Target="OPENVIKING_PUBLIC_BASE_URL" Default="" Mode="" Description="Only when OpenViking is reached through a reverse proxy over HTTPS (for OAuth or MCP clients on the internet): the public address, such as https://ov.example.com. Leave empty otherwise." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+</Container>
