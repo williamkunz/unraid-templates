@@ -100,5 +100,5 @@ Template and Unraid problems: the Support link. Strata itself: the Project link.
 
   <Config Name="GPU roles" Target="GPU_ROLES" Default="" Mode="" Description="Several cards: a role for each, e.g. 1=main,0=helper (main, helper or off; cards you do not name are off). Empty: the engine's choice. See docs/MULTI_GPU.md in the Strata repository." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
 
-  <Config Name="Engine settings" Target="STRATA_SET" Default="" Mode="" Description="Advanced engine settings, space separated KEY=VALUE, like strata launch --set. For example STRATA_ROUTE_TAIL_SKIP=7 skips rarely used parts of the model: a little faster, but answers differ slightly (off by default since 0.2.17). docs/SETTINGS.md in the Strata repository lists every setting." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Engine settings" Target="STRATA_SET" Default="" Mode="" Description="Advanced engine settings, space separated KEY=VALUE, like strata launch --set. For example STRATA_ROUTE_TAIL_SKIP=7 skips rarely used parts of the model: a little faster, but answers differ slightly (off by default since 0.2.17). docs/SETTINGS.md in the Strata repository lists every setting." Type="Variable" Display="advanced" Required="false" Mask="false">STRATA_ADAPT_SIGNAL=host</Config>
 </Container>
